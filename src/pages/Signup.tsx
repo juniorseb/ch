@@ -5,7 +5,7 @@ import Button from '../components/Button'
 import AuthHeader from '../components/AuthHeader'
 import GoogleButton from '../components/GoogleButton'
 import SupportBadge from '../components/SupportBadge'
-import { signUp, sendSignupOtp, completeSignupWithoutOtp } from '../lib/api/auth'
+import { signUp, signIn, sendSignupOtp, completeSignupWithoutOtp } from '../lib/api/auth'
 import { isOtpEnabled } from '../lib/settings'
 import { track } from '../lib/analytics'
 
@@ -30,6 +30,8 @@ export default function Signup() {
       if (!otpOn) {
         // OTP désactivé par l'admin : on entre directement, sans vérification.
         await completeSignupWithoutOtp(userId)
+        // Connexion explicite -> session persistée (survit aux rechargements).
+        await signIn(email, password)
         track('account_created')
         sessionStorage.setItem('mamelodie:demo-authed', '1')
         navigate('/app')

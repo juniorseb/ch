@@ -95,6 +95,9 @@ export default function AccountStep() {
         return
       }
       await completeSignupWithoutOtp(res.userId)
+      // Connexion explicite : garantit une VRAIE session persistée (sinon elle
+      // peut être perdue au rechargement, ex. retour de paiement -> /inscription).
+      await signIn(email, password)
       track('account_created')
       authed()
       await proceed(draft)
