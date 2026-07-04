@@ -88,7 +88,7 @@ export default function StyleStep() {
       <input
         value={draft.customStyle}
         onChange={(e) => setDraft({ customStyle: e.target.value, style: '' })}
-        placeholder="Ex : coupé-décalé + gospel"
+        placeholder="Ex : salsa + slow"
         className="w-full h-11 md:h-12 rounded-lg border border-line px-3 md:px-4 text-[14px] md:text-[16px] bg-surface focus:border-ember-600 outline-none mb-7"
       />
 

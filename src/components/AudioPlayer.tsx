@@ -19,11 +19,15 @@ export default function AudioPlayer({ title, versions, songId }: AudioPlayerProp
   const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [shareMsg, setShareMsg] = useState('')
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Si on change de version pendant la lecture, on repart proprement.
   useEffect(() => {
     setPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
   }, [active])
 
   const current = clips[active] ?? ''
@@ -38,6 +42,20 @@ export default function AudioPlayer({ title, versions, songId }: AudioPlayerProp
       el.play()
       setPlaying(true)
     }
+  }
+
+  // Déplacement dans la piste (retour arrière / avance).
+  function seek(t: number) {
+    const el = audioRef.current
+    if (!el) return
+    el.currentTime = t
+    setCurrentTime(t)
+  }
+
+  function fmt(s: number): string {
+    if (!isFinite(s) || s < 0) return '0:00'
+    const m = Math.floor(s / 60)
+    return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`
   }
 
   async function handleShare() {
@@ -94,7 +112,34 @@ export default function AudioPlayer({ title, versions, songId }: AudioPlayerProp
         )}
       </button>
       {current && (
-        <audio key={active} ref={audioRef} src={current} onEnded={() => setPlaying(false)} />
+        <audio
+          key={active}
+          ref={audioRef}
+          src={current}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+          onEnded={() => { setPlaying(false); setCurrentTime(0) }}
+        />
+      )}
+
+      {/* Barre de lecture : glisser pour revenir en arrière / avancer. */}
+      {current && (
+        <div className="w-full max-w-sm mb-6">
+          <input
+            type="range"
+            min={0}
+            max={duration || 0}
+            step={0.1}
+            value={Math.min(currentTime, duration || 0)}
+            onChange={(e) => seek(Number(e.target.value))}
+            aria-label="Position de lecture"
+            className="w-full h-1.5 accent-ember-600 cursor-pointer"
+          />
+          <div className="flex justify-between text-[11px] md:text-[12px] text-clay tabular-nums mt-1.5">
+            <span>{fmt(currentTime)}</span>
+            <span>{fmt(duration)}</span>
+          </div>
+        </div>
       )}
 
       <div className="flex gap-2.5 w-full">

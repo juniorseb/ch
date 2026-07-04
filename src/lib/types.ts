@@ -103,12 +103,13 @@ export interface StyleOption {
 
 export const STYLES: StyleOption[] = [
   { id: 'afrobeat', label: 'Afrobeat', popular: true },
-  { id: 'coupe-decale', label: 'Coupé-décalé', popular: true },
   { id: 'zouglou', label: 'Zouglou', popular: true },
   { id: 'gospel', label: 'Gospel', popular: true },
   { id: 'rumba', label: 'Rumba / Ndombolo', popular: true },
+  { id: 'zouk', label: 'Zouk', popular: true },
+  { id: 'rnb', label: 'R&B', popular: true },
   { id: 'pop', label: 'Pop', popular: true },
-  { id: 'rnb', label: 'R&B' },
+  { id: 'coupe-decale', label: 'Coupé-décalé' },
   { id: 'reggae', label: 'Reggae' },
   { id: 'rap', label: 'Rap / Drill' },
   { id: 'slow', label: 'Slow / Ballade' },
@@ -116,7 +117,6 @@ export const STYLES: StyleOption[] = [
   { id: 'makossa', label: 'Makossa' },
   { id: 'bikutsi', label: 'Bikutsi' },
   { id: 'amapiano', label: 'Amapiano' },
-  { id: 'zouk', label: 'Zouk' },
   { id: 'highlife', label: 'Highlife' },
   { id: 'traditionnel', label: 'Traditionnel' },
   { id: 'jazz', label: 'Jazz / Soul' },
