@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import GenerationError from '../components/GenerationError'
 import { useSongDraft } from '../lib/SongDraftContext'
+import { setActiveGeneration } from '../lib/activeGeneration'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import type { OccasionId } from '../lib/types'
 
@@ -37,7 +38,7 @@ export default function PaymentReturn() {
       if (cancelled) return
       const { data } = await supabase
         .from('song_generations')
-        .select('occasion, recipient_name, sender_name, relation, marriage_type, meet_context, style, voice, ambiance, language, story, status')
+        .select('occasion, recipient_name, sender_name, relation, marriage_type, meet_context, style, voice, ambiance, language, story, title, status')
         .eq('id', songId)
         .maybeSingle()
 
@@ -68,14 +69,16 @@ export default function PaymentReturn() {
           navigate(`/app/chansons/${songId}`, { replace: true })
           return
         }
-        if (status === 'generating_audio') {
+        if (status === 'generating_audio' || status === 'lyrics_ready' || status === 'generating_lyrics') {
+          // La composition tourne côté serveur : on la suit via la bannière en
+          // arrière-plan (comme le flow crédit), pas l'ancien écran bloquant.
           localStorage.removeItem(KEY)
-          navigate('/creer/generation', { replace: true })
-          return
-        }
-        if (status === 'lyrics_ready' || status === 'generating_lyrics') {
-          localStorage.removeItem(KEY)
-          navigate('/creer/paroles', { replace: true })
+          setActiveGeneration({
+            id: songId,
+            title: (data.title as string) || `Pour ${(data.recipient_name as string) || 'toi'}`,
+            startedAt: Date.now(),
+          })
+          navigate('/app', { replace: true })
           return
         }
         // status 'pending_payment' : le webhook n'a pas encore confirmé,
