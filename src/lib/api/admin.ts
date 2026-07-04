@@ -366,29 +366,40 @@ export async function setOtpEnabled(value: boolean): Promise<void> {
   if (error) throw error
 }
 
-// Réglages des fournisseurs (IA paroles + musique), pilotés par toggles admin.
-// Paroles : OpenAI (gpt-4o-mini) en principal, Groq (llama-3.3) en secours.
-// Musique : ApiPass (Suno). Chacun activable indépendamment.
+// Réglages des fournisseurs (IA paroles + musique), pilotés depuis l'admin.
+// Paroles : OpenAI (gpt-4o-mini) principal, Groq (llama-3.3) secours.
+// Musique : SunoAPI.org principal, ApiPass secours (ordre réglable).
+export type MusicProvider = 'sunoapi' | 'apipass'
+
 export interface ProviderSettings {
   lyricsOpenaiEnabled: boolean
   lyricsGroqEnabled: boolean
+  musicSunoapiEnabled: boolean
   musicApipassEnabled: boolean
+  musicPrimary: MusicProvider
 }
 
-const PROVIDER_KEYS: Record<keyof ProviderSettings, string> = {
+// Uniquement les bascules booléennes (musicPrimary est géré à part).
+export type ProviderToggle = 'lyricsOpenaiEnabled' | 'lyricsGroqEnabled' | 'musicSunoapiEnabled' | 'musicApipassEnabled'
+
+const PROVIDER_KEYS: Record<ProviderToggle, string> = {
   lyricsOpenaiEnabled: 'lyrics_openai_enabled',
   lyricsGroqEnabled: 'lyrics_groq_enabled',
+  musicSunoapiEnabled: 'music_sunoapi_enabled',
   musicApipassEnabled: 'music_apipass_enabled',
 }
 
 export async function getProviderSettings(): Promise<ProviderSettings> {
-  const bDemo = (k: string, d: boolean) =>
-    (localStorage.getItem(`mamelodie:setting:${k}`) ?? String(d)) === 'true'
+  const primaryOf = (v: string | undefined): MusicProvider => (v === 'apipass' ? 'apipass' : 'sunoapi')
   if (!isSupabaseConfigured) {
+    const bDemo = (k: string, d: boolean) =>
+      (localStorage.getItem(`mamelodie:setting:${k}`) ?? String(d)) === 'true'
     return {
       lyricsOpenaiEnabled: bDemo('lyrics_openai_enabled', true),
       lyricsGroqEnabled: bDemo('lyrics_groq_enabled', true),
+      musicSunoapiEnabled: bDemo('music_sunoapi_enabled', true),
       musicApipassEnabled: bDemo('music_apipass_enabled', true),
+      musicPrimary: primaryOf(localStorage.getItem('mamelodie:setting:music_primary') ?? 'sunoapi'),
     }
   }
   const { data } = await supabase.from('app_settings').select('key, value')
@@ -397,11 +408,13 @@ export async function getProviderSettings(): Promise<ProviderSettings> {
   return {
     lyricsOpenaiEnabled: b('lyrics_openai_enabled', true),
     lyricsGroqEnabled: b('lyrics_groq_enabled', true),
+    musicSunoapiEnabled: b('music_sunoapi_enabled', true),
     musicApipassEnabled: b('music_apipass_enabled', true),
+    musicPrimary: primaryOf(map.get('music_primary')),
   }
 }
 
-export async function setProviderSetting(field: keyof ProviderSettings, value: boolean): Promise<void> {
+export async function setProviderSetting(field: ProviderToggle, value: boolean): Promise<void> {
   const key = PROVIDER_KEYS[field]
   if (!isSupabaseConfigured) {
     localStorage.setItem(`mamelodie:setting:${key}`, String(value))
@@ -409,6 +422,18 @@ export async function setProviderSetting(field: keyof ProviderSettings, value: b
   }
   const { error } = await supabase.functions.invoke('admin-api', {
     body: { action: 'set-setting', key, value: String(value) },
+  })
+  if (error) throw error
+}
+
+// Choix du fournisseur musical principal (l'autre devient le secours).
+export async function setMusicPrimary(provider: MusicProvider): Promise<void> {
+  if (!isSupabaseConfigured) {
+    localStorage.setItem('mamelodie:setting:music_primary', provider)
+    return
+  }
+  const { error } = await supabase.functions.invoke('admin-api', {
+    body: { action: 'set-setting', key: 'music_primary', value: provider },
   })
   if (error) throw error
 }
@@ -438,6 +463,7 @@ export interface SecretsStatus {
   geniuspay_whsec_live: boolean
   openrouter_api_key: boolean
   groq_api_key: boolean
+  sunoapi_api_key: boolean
   apipass_api_key: boolean
   resend_api_key: boolean
 }
@@ -451,6 +477,7 @@ const EMPTY_SECRETS: SecretsStatus = {
   geniuspay_whsec_live: false,
   openrouter_api_key: false,
   groq_api_key: false,
+  sunoapi_api_key: false,
   apipass_api_key: false,
   resend_api_key: false,
 }

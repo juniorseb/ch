@@ -8,7 +8,7 @@
 // voit alors simplement le statut déjà 'completed' en base.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
-import { pollApipass, markCompleted, markFailed } from '../_shared/apipass.ts'
+import { pollMusicTask, markCompleted, markFailed, secretKeyFor, type MusicProvider } from '../_shared/music.ts'
 import { loadSecrets, secretOrEnv } from '../_shared/secrets.ts'
 
 Deno.serve(async (req) => {
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     const { data: song } = await admin
       .from('song_generations')
-      .select('id, user_id, status, suno_task_id, audio_url, audio_url_2')
+      .select('id, user_id, status, suno_task_id, music_provider, audio_url, audio_url_2')
       .eq('id', songGenerationId)
       .maybeSingle()
     if (!song || song.user_id !== user.id) return jsonResponse({ error: 'Chanson introuvable' }, 404)
@@ -46,12 +46,14 @@ Deno.serve(async (req) => {
       return jsonResponse({ status: 'completed', audioUrl: song.audio_url, audioUrl2: song.audio_url_2 })
     }
     if (song.status === 'failed') return jsonResponse({ status: 'failed' })
-    // La tâche ApiPass n'a pas encore été créée par generate-audio.
+    // La tâche musicale n'a pas encore été créée par generate-audio.
     if (!song.suno_task_id) return jsonResponse({ status: 'pending' })
 
-    // Un seul sondage ApiPass, puis finalisation si prêt.
-    const apipassKey = secretOrEnv(await loadSecrets(), 'apipass_api_key', 'APIPASS_API_KEY')
-    const result = await pollApipass(song.suno_task_id as string, apipassKey)
+    // Un seul sondage du BON fournisseur, puis finalisation si prêt.
+    const provider = ((song.music_provider as string) || 'apipass') as MusicProvider
+    const { key, env } = secretKeyFor(provider)
+    const apiKey = secretOrEnv(await loadSecrets(), key, env)
+    const result = await pollMusicTask(provider, song.suno_task_id as string, apiKey)
     if (result.state === 'success' && result.urls[0]) {
       await markCompleted(admin, song.id as string, result.urls)
       return jsonResponse({ status: 'completed', audioUrl: result.urls[0], audioUrl2: result.urls[1] })

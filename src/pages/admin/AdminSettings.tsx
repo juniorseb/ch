@@ -5,6 +5,7 @@ import {
   setOtpEnabled,
   getProviderSettings,
   setProviderSetting,
+  setMusicPrimary,
   getCreditTiers,
   setCreditTiers,
   isGeniuspaySandbox,
@@ -13,6 +14,8 @@ import {
   setSecret,
   type SecretsStatus,
   type ProviderSettings,
+  type ProviderToggle,
+  type MusicProvider,
 } from '../../lib/api/admin'
 import type { CreditTier } from '../../lib/types'
 
@@ -27,6 +30,7 @@ const EMPTY_SECRETS: SecretsStatus = {
   geniuspay_whsec_live: false,
   openrouter_api_key: false,
   groq_api_key: false,
+  sunoapi_api_key: false,
   apipass_api_key: false,
   resend_api_key: false,
 }
@@ -171,13 +175,24 @@ export default function AdminSettings() {
     }
   }
 
-  async function toggleProvider(field: keyof ProviderSettings) {
+  async function toggleProvider(field: ProviderToggle) {
     if (!providers || savingKey) return
     const next = !providers[field]
     setSavingKey(field)
     try {
       await setProviderSetting(field, next)
       setProviders({ ...providers, [field]: next })
+    } finally {
+      setSavingKey('')
+    }
+  }
+
+  async function chooseMusicPrimary(provider: MusicProvider) {
+    if (!providers || savingKey || providers.musicPrimary === provider) return
+    setSavingKey('musicPrimary')
+    try {
+      await setMusicPrimary(provider)
+      setProviders({ ...providers, musicPrimary: provider })
     } finally {
       setSavingKey('')
     }
@@ -206,7 +221,7 @@ export default function AdminSettings() {
       {/* Fournisseurs IA & musique */}
       <h2 className="text-[17px] md:text-[19px] mb-1">Fournisseurs</h2>
       <p className="text-[12px] md:text-[13px] text-clay mb-3">
-        Paroles : gpt-4o-mini (OpenRouter) en principal, Groq en secours automatique. Musique : ApiPass (Suno).
+        Paroles : gpt-4o-mini (OpenRouter) principal, Groq secours. Musique : SunoAPI.org principal, ApiPass secours (bascule auto).
       </p>
       <div className="bg-surface border border-line rounded-xl divide-y divide-line">
         <div className="px-4 pt-3 pb-1 text-[11px] md:text-[12px] uppercase tracking-wide text-clay">Paroles (IA)</div>
@@ -226,16 +241,45 @@ export default function AdminSettings() {
         />
         <div className="px-4 pt-3 pb-1 text-[11px] md:text-[12px] uppercase tracking-wide text-clay">Musique</div>
         <SettingRow
-          title="ApiPass (Suno)"
+          title="SunoAPI.org"
           desc="Génération audio des deux versions."
+          on={!!providers?.musicSunoapiEnabled}
+          onChange={() => toggleProvider('musicSunoapiEnabled')}
+          disabled={!providers || savingKey === 'musicSunoapiEnabled'}
+        />
+        <SettingRow
+          title="ApiPass (secours)"
+          desc="Utilisé si SunoAPI est désactivé ou en panne."
           on={!!providers?.musicApipassEnabled}
           onChange={() => toggleProvider('musicApipassEnabled')}
           disabled={!providers || savingKey === 'musicApipassEnabled'}
         />
+        <div className="px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-[13px] md:text-[15px] text-ink-soft">Fournisseur principal</span>
+          <div className="flex gap-1.5">
+            {(['sunoapi', 'apipass'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => chooseMusicPrimary(p)}
+                disabled={!providers || savingKey === 'musicPrimary'}
+                className={`px-3 py-1.5 rounded-lg text-[12px] md:text-[13px] font-medium disabled:opacity-60 ${
+                  providers?.musicPrimary === p ? 'bg-ember-600 text-cream' : 'text-ink-soft hover:bg-ember-50'
+                }`}
+              >
+                {p === 'sunoapi' ? 'SunoAPI' : 'ApiPass'}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       {providers && !providers.lyricsOpenaiEnabled && !providers.lyricsGroqEnabled && (
         <p className="text-[12px] md:text-[13px] text-ember-700 mt-2">
           ⚠️ Aucun fournisseur de paroles actif : la génération échouera.
+        </p>
+      )}
+      {providers && !providers.musicSunoapiEnabled && !providers.musicApipassEnabled && (
+        <p className="text-[12px] md:text-[13px] text-ember-700 mt-2">
+          ⚠️ Aucun fournisseur musical actif : la génération échouera.
         </p>
       )}
 
@@ -248,7 +292,8 @@ export default function AdminSettings() {
         <div className="flex flex-col gap-3">
           <SecretRow label="OpenRouter (paroles — gpt-4o-mini)" keyName="openrouter_api_key" configured={secrets.openrouter_api_key} onSave={handleSaveSecret} />
           <SecretRow label="Groq (paroles — secours)" keyName="groq_api_key" configured={secrets.groq_api_key} onSave={handleSaveSecret} />
-          <SecretRow label="ApiPass (musique — Suno)" keyName="apipass_api_key" configured={secrets.apipass_api_key} onSave={handleSaveSecret} />
+          <SecretRow label="SunoAPI.org (musique — principal)" keyName="sunoapi_api_key" configured={secrets.sunoapi_api_key} onSave={handleSaveSecret} />
+          <SecretRow label="ApiPass (musique — secours)" keyName="apipass_api_key" configured={secrets.apipass_api_key} onSave={handleSaveSecret} />
           <SecretRow label="Resend (emails — OTP)" keyName="resend_api_key" configured={secrets.resend_api_key} onSave={handleSaveSecret} />
         </div>
       </div>

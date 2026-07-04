@@ -3,7 +3,7 @@
 // parcours). Écrit dans api_calls via service_role.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-export type ApiName = 'openrouter' | 'groq' | 'apipass' | 'resend' | 'geniuspay'
+export type ApiName = 'openrouter' | 'groq' | 'sunoapi' | 'apipass' | 'resend' | 'geniuspay'
 
 export async function recordApiCall(
   api: ApiName,

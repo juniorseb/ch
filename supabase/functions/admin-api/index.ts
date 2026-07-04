@@ -12,7 +12,7 @@ const ALLOWED_SECRETS = new Set([
   'geniuspay_pk_sandbox', 'geniuspay_sk_sandbox', 'geniuspay_whsec_sandbox',
   'geniuspay_pk_live', 'geniuspay_sk_live', 'geniuspay_whsec_live',
   // Fournisseurs IA & services
-  'openrouter_api_key', 'groq_api_key', 'apipass_api_key', 'resend_api_key',
+  'openrouter_api_key', 'groq_api_key', 'sunoapi_api_key', 'apipass_api_key', 'resend_api_key',
 ])
 
 Deno.serve(async (req) => {

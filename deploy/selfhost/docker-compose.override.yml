@@ -11,6 +11,7 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SUNOAPI_API_KEY: ${SUNOAPI_API_KEY:-}
       APIPASS_API_KEY: ${APIPASS_API_KEY:-}
       # Callback musique (recommandé) : URL publique des Edge Functions +
       # secret partagé. Mono-domaine : FUNCTIONS_PUBLIC_URL=https://mamelodie.net/functions/v1

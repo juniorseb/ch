@@ -67,6 +67,8 @@ create table if not exists song_generations (
   audio_url_2 text,
   download_count integer not null default 0,
   suno_task_id text,
+  -- Fournisseur musical ayant traité la tâche : 'sunoapi' ou 'apipass'.
+  music_provider text,
   status text not null default 'pending_payment'
     check (status in (
       'pending_payment', 'generating_lyrics', 'lyrics_ready',

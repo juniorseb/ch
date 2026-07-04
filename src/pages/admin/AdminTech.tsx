@@ -5,7 +5,8 @@ import { getApiMetrics, type ApiMetric, type FunnelPeriod } from '../../lib/api/
 const API_INFO: Record<string, { label: string; role: string }> = {
   openrouter: { label: 'OpenRouter', role: 'Paroles (gpt-4o-mini)' },
   groq: { label: 'Groq', role: 'Paroles (secours)' },
-  apipass: { label: 'ApiPass', role: 'Musique (générations facturées)' },
+  sunoapi: { label: 'SunoAPI.org', role: 'Musique (principal)' },
+  apipass: { label: 'ApiPass', role: 'Musique (secours)' },
   resend: { label: 'Resend', role: 'Emails (codes, resets)' },
   geniuspay: { label: 'GeniusPay', role: 'Paiements' },
 }
