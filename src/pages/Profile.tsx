@@ -55,7 +55,7 @@ export default function Profile() {
 
       <div className="bg-ember-50 rounded-xl p-4 mb-5 flex items-center justify-between">
         <div>
-          <div className="text-[13px] md:text-[15px] text-ember-700 font-semibold">{songsRemaining} crédit{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}</div>
+          <div className="text-[13px] md:text-[15px] text-ink font-semibold">{songsRemaining} crédit{songsRemaining > 1 ? 's' : ''} restant{songsRemaining > 1 ? 's' : ''}</div>
           <div className="text-[12px] md:text-[13px] text-ember-700/80">1 crédit = 1 chanson</div>
         </div>
         <Button
