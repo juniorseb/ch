@@ -154,12 +154,17 @@ export default function ActiveGenerationBanner() {
           </span>
         )}
         {status === 'completed' ? (
-          <button
-            onClick={listen}
-            className="shrink-0 h-9 px-3.5 rounded-lg bg-ember-600 text-cream text-[13px] font-semibold"
-          >
-            Écouter
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={listen}
+              className="h-9 px-3.5 rounded-lg bg-ember-600 text-cream text-[13px] font-semibold"
+            >
+              Écouter
+            </button>
+            <button onClick={dismiss} aria-label="Fermer" className="text-clay p-1 text-[16px] leading-none">
+              ✕
+            </button>
+          </div>
         ) : (
           <button onClick={dismiss} aria-label="Fermer" className="shrink-0 text-clay p-1 text-[16px] leading-none">
             ✕
