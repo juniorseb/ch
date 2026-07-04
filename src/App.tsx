@@ -59,10 +59,13 @@ export default function App() {
           <Route path="/creer/ameliorer" element={<ImproveChoice />} />
           <Route path="/creer/paroles" element={<LyricsEdit />} />
           <Route path="/creer/compte" element={<AccountStep />} />
+          {/* PUBLIC : le retour de paiement mobile money peut s'ouvrir dans un
+              AUTRE navigateur (ex. Wave -> Safari) sans la session -> ne pas le
+              mettre derrière RequireAuth (sinon redirection vers /inscription). */}
+          <Route path="/creer/retour" element={<PaymentReturn />} />
 
           <Route element={<RequireAuth />}>
             <Route path="/creer/paiement" element={<Payment />} />
-            <Route path="/creer/retour" element={<PaymentReturn />} />
             <Route path="/creer/lancement" element={<GenerationStart />} />
             <Route path="/creer/generation" element={<Generating />} />
             <Route path="/creer/pret" element={<SongReady />} />

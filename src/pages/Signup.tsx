@@ -1,11 +1,11 @@
-import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useNavigate, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Shell from '../components/Shell'
 import Button from '../components/Button'
 import AuthHeader from '../components/AuthHeader'
 import GoogleButton from '../components/GoogleButton'
 import SupportBadge from '../components/SupportBadge'
-import { signUp, signIn, sendSignupOtp, completeSignupWithoutOtp } from '../lib/api/auth'
+import { signUp, signIn, sendSignupOtp, completeSignupWithoutOtp, getCurrentUser } from '../lib/api/auth'
 import { isOtpEnabled } from '../lib/settings'
 import { track } from '../lib/analytics'
 
@@ -16,6 +16,11 @@ export default function Signup() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Déjà connecté ? -> dashboard (pas de formulaire d'inscription).
+  const [authed, setAuthed] = useState(false)
+  useEffect(() => {
+    getCurrentUser().then((u) => { if (u) setAuthed(true) })
+  }, [])
 
   const canSubmit = email.includes('@') && password.length >= 8 && password === confirm
 
@@ -49,6 +54,8 @@ export default function Signup() {
       setLoading(false)
     }
   }
+
+  if (authed) return <Navigate to="/app" replace />
 
   return (
     <Shell

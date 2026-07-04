@@ -1,11 +1,11 @@
-import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useNavigate, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Shell from '../components/Shell'
 import Button from '../components/Button'
 import AuthHeader from '../components/AuthHeader'
 import GoogleButton from '../components/GoogleButton'
 import SupportBadge from '../components/SupportBadge'
-import { signIn } from '../lib/api/auth'
+import { signIn, getCurrentUser } from '../lib/api/auth'
 import { track } from '../lib/analytics'
 
 export default function Login() {
@@ -14,6 +14,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Déjà connecté ? -> on n'affiche pas le formulaire, on va au dashboard.
+  const [authed, setAuthed] = useState(false)
+  useEffect(() => {
+    getCurrentUser().then((u) => { if (u) setAuthed(true) })
+  }, [])
 
   async function handleSubmit() {
     if (!email.includes('@') || !password) return
@@ -30,6 +35,8 @@ export default function Login() {
       setLoading(false)
     }
   }
+
+  if (authed) return <Navigate to="/app" replace />
 
   return (
     <Shell
