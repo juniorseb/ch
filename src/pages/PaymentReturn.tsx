@@ -35,18 +35,23 @@ export default function PaymentReturn() {
     let cancelled = false
 
     ;(async () => {
-      // Auto-connexion via le jeton magic-link glissé dans l'URL de retour :
-      // rétablit la session même dans un autre navigateur (Wave -> Safari), pour
-      // reprendre le parcours sans rupture. Puis on retire le jeton de l'URL.
-      const loginToken = new URLSearchParams(window.location.search).get('login')
+      // Paramètres du retour (glissés dans l'URL par create-payment) :
+      //  - login : jeton magic-link -> auto-connexion (session absente dans un
+      //    autre navigateur, ex. Wave -> Safari)
+      //  - song  : id de la chanson (le pendingSongId du localStorage n'existe
+      //    pas dans l'autre navigateur)
+      const params = new URLSearchParams(window.location.search)
+      const loginToken = params.get('login')
+      const songFromUrl = params.get('song')
       if (loginToken) {
         try {
           await supabase.auth.verifyOtp({ token_hash: loginToken, type: 'magiclink' })
         } catch {
           /* jeton expiré/déjà utilisé -> on tombera sur l'écran « connecte-toi » */
         }
-        window.history.replaceState({}, '', window.location.pathname)
       }
+      // On retire les paramètres sensibles de l'URL (hygiène).
+      if (loginToken || songFromUrl) window.history.replaceState({}, '', window.location.pathname)
 
       const user = await getCurrentUser()
       if (cancelled) return
@@ -58,7 +63,8 @@ export default function PaymentReturn() {
         return
       }
 
-      const songId = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null
+      const songId =
+        songFromUrl || (typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null)
       if (!songId) {
         // Connecté mais rien à reprendre (ex. recharge de crédits) -> dashboard.
         navigate('/app', { replace: true })

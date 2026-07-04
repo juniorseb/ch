@@ -138,10 +138,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Clés GeniusPay non configurées' }, 500)
     }
 
-    // Jeton de connexion à USAGE UNIQUE ajouté à l'URL de retour : permet
-    // l'auto-connexion même si le retour s'ouvre dans un AUTRE navigateur
-    // (mobile money type Wave -> Safari), pour ne PAS casser l'élan de création.
-    let successUrl = returnUrl
+    // URL de retour enrichie pour un retour cross-navigateur (mobile money
+    // Wave -> Safari) SANS rupture :
+    //  - login=<jeton magic-link> : auto-connexion (session absente dans l'autre nav)
+    //  - song=<id> : retrouver la génération (pendingSongId du localStorage n'existe
+    //    pas dans l'autre navigateur).
+    const returnParams: string[] = []
     try {
       if (user.email) {
         const { data: link } = await supabase.auth.admin.generateLink({
@@ -149,14 +151,15 @@ Deno.serve(async (req) => {
           email: user.email,
         })
         const tokenHash = (link?.properties as { hashed_token?: string } | undefined)?.hashed_token
-        if (tokenHash) {
-          const sep = returnUrl.includes('?') ? '&' : '?'
-          successUrl = `${returnUrl}${sep}login=${encodeURIComponent(tokenHash)}`
-        }
+        if (tokenHash) returnParams.push(`login=${encodeURIComponent(tokenHash)}`)
       }
     } catch (e) {
       console.error('[create-payment] generateLink échoué (retour sans auto-login):', String(e))
     }
+    if (song?.id) returnParams.push(`song=${encodeURIComponent(song.id)}`)
+    const successUrl = returnParams.length
+      ? `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}${returnParams.join('&')}`
+      : returnUrl
 
     const geniusRes = await fetch(GENIUSPAY_URL, {
       method: 'POST',
