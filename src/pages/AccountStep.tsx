@@ -29,6 +29,7 @@ export default function AccountStep() {
   const [phase, setPhase] = useState<'form' | 'otp'>('form')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [code, setCode] = useState(['', '', '', ''])
   const [userId, setUserId] = useState('')
   const [loading, setLoading] = useState(false)
@@ -68,7 +69,10 @@ export default function AccountStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const canSubmit = email.includes('@') && password.length >= (mode === 'signup' ? 8 : 1)
+  const canSubmit =
+    email.includes('@') &&
+    password.length >= (mode === 'signup' ? 8 : 1) &&
+    (mode === 'login' || password === confirm)
 
   function authed() {
     sessionStorage.setItem('mamelodie:demo-authed', '1')
@@ -171,11 +175,11 @@ export default function AccountStep() {
           <p className="text-[12px] md:text-[13px] text-clay text-center mt-2">
             {mode === 'signup' ? (
               <>Déjà un compte ?{' '}
-                <button onClick={() => { setMode('login'); setError('') }} className="text-ember-700">Se connecter</button>
+                <button onClick={() => { setMode('login'); setError(''); setConfirm('') }} className="text-ember-700">Se connecter</button>
               </>
             ) : (
               <>Pas encore de compte ?{' '}
-                <button onClick={() => { setMode('signup'); setError('') }} className="text-ember-700">En créer un</button>
+                <button onClick={() => { setMode('signup'); setError(''); setConfirm('') }} className="text-ember-700">En créer un</button>
               </>
             )}
           </p>
@@ -228,6 +232,21 @@ export default function AccountStep() {
             className="w-full h-12 md:h-[52px] rounded-lg border border-line px-3 md:px-4 text-[15px] md:text-[17px] bg-surface focus:border-ember-600 outline-none"
           />
         </div>
+        {mode === 'signup' && (
+          <div>
+            <label className="text-[13px] md:text-[15px] text-ink-soft block mb-1.5">Confirmer le mot de passe</label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Retape ton mot de passe"
+              className="w-full h-12 md:h-[52px] rounded-lg border border-line px-3 md:px-4 text-[15px] md:text-[17px] bg-surface focus:border-ember-600 outline-none"
+            />
+            {confirm.length > 0 && confirm !== password && (
+              <p className="text-[12px] md:text-[13px] text-ember-700 mt-1.5">Les mots de passe ne correspondent pas.</p>
+            )}
+          </div>
+        )}
         {error && <p className="text-[12px] md:text-[13px] text-ember-700">{error}</p>}
       </div>
     </Shell>
