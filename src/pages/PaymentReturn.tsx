@@ -74,7 +74,7 @@ export default function PaymentReturn() {
           // arrière-plan (comme le flow crédit), pas l'ancien écran bloquant.
           localStorage.removeItem(KEY)
           setActiveGeneration({
-            id: songId,
+            id: songId as string,
             title: (data.title as string) || `Pour ${(data.recipient_name as string) || 'toi'}`,
             startedAt: Date.now(),
           })
