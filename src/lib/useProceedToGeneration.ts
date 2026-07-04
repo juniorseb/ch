@@ -18,7 +18,7 @@ export function useProceedToGeneration() {
   return async function proceed(draft: SongDraft): Promise<void> {
     const balance = await getCreditBalance()
     if (balance >= 1) {
-      const { songGenerationId } = await createSongFromCredit(draft)
+      const { songGenerationId, title } = await createSongFromCredit(draft)
       setSongGenerationId(songGenerationId)
       track('generation_started')
 
@@ -32,8 +32,10 @@ export function useProceedToGeneration() {
       // Réel : la composition tourne côté serveur. On la suit en arrière-plan
       // via une bannière sur le dashboard (l'utilisateur reste libre).
       setActiveGeneration({
+        // Le vrai titre (celui enregistré, généré par l'IA si non saisi) pour
+        // que la notification corresponde à ce qui apparaît dans la bibliothèque.
         id: songGenerationId,
-        title: draft.songTitle?.trim() || `Pour ${draft.recipientName || 'toi'}`,
+        title: title || draft.songTitle?.trim() || `Pour ${draft.recipientName || 'toi'}`,
         startedAt: Date.now(),
       })
       // La chanson est créée côté serveur : le brouillon n'a plus d'utilité.

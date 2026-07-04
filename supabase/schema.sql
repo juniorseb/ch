@@ -65,6 +65,8 @@ create table if not exists song_generations (
   lyrics text,
   audio_url text,
   audio_url_2 text,
+  -- Flux d'écoute anticipée (SunoAPI) le temps que le MP3 final se prépare.
+  stream_url text,
   download_count integer not null default 0,
   suno_task_id text,
   -- Fournisseur musical ayant traité la tâche : 'sunoapi' ou 'apipass'.

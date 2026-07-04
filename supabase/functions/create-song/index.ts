@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
         .eq('id', song.id)
     }
 
-    return jsonResponse({ songGenerationId: song.id })
+    return jsonResponse({ songGenerationId: song.id, title })
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500)
   }

@@ -11,7 +11,7 @@ insert into app_settings (key, value) values
   ('music_sunoapi_enabled', 'true'),
   ('music_apipass_enabled', 'true'),
   ('music_primary', 'sunoapi'),
-  ('music_sunoapi_model', 'V4_5')
+  ('music_sunoapi_model', 'V5_5')
 on conflict (key) do nothing;
 
 commit;

@@ -37,11 +37,13 @@ function buildStyleTag(song: Record<string, unknown>): string {
   return [song.style, song.ambiance, voice, lang].filter(Boolean).join(', ').slice(0, MAX_STYLE)
 }
 
-// URL publique du callback (si configurée) : un seul endpoint pour les deux
-// fournisseurs (music-webhook re-interroge selon le provider de la chanson).
-function callbackUrl(): string | undefined {
+// URL de callback : un seul endpoint pour les deux fournisseurs (music-webhook
+// re-interroge selon le provider de la chanson). SunoAPI EXIGE un callBackUrl
+// valide ; en l'absence d'URL publique (dev local) on renvoie un placeholder
+// neutre — la finalisation se fait alors par le sondage check-song-status.
+function callbackUrl(): string {
   const base = Deno.env.get('FUNCTIONS_PUBLIC_URL')
-  if (!base) return undefined
+  if (!base) return 'https://example.com/suno-callback'
   const secret = Deno.env.get('APIPASS_WEBHOOK_SECRET')
   const url = `${base.replace(/\/$/, '')}/music-webhook`
   return secret ? `${url}?secret=${encodeURIComponent(secret)}` : url

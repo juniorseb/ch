@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     const { data: song } = await admin
       .from('song_generations')
-      .select('id, user_id, status, suno_task_id, music_provider, audio_url, audio_url_2')
+      .select('id, user_id, status, suno_task_id, music_provider, audio_url, audio_url_2, stream_url')
       .eq('id', songGenerationId)
       .maybeSingle()
     if (!song || song.user_id !== user.id) return jsonResponse({ error: 'Chanson introuvable' }, 404)
@@ -62,7 +62,16 @@ Deno.serve(async (req) => {
       await markFailed(admin, song.id as string, result.message)
       return jsonResponse({ status: 'failed' })
     }
-    return jsonResponse({ status: 'generating_audio' })
+    // En cours : si un flux d'aperçu vient d'apparaître, on le mémorise et on le
+    // diffuse (écoute en avant-première pendant que le MP3 final se prépare).
+    const previewUrl = result.previewUrl || (song.stream_url as string | undefined)
+    if (result.previewUrl && !song.stream_url) {
+      await admin.from('song_generations').update({ stream_url: result.previewUrl }).eq('id', song.id)
+      await admin.channel(`song:${song.id}`).send({
+        type: 'broadcast', event: 'status', payload: { status: 'preview', streamUrl: result.previewUrl },
+      })
+    }
+    return jsonResponse({ status: 'generating_audio', streamUrl: previewUrl })
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500)
   }

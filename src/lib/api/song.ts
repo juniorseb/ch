@@ -47,6 +47,8 @@ export interface SongStatusResult {
   status: 'pending' | 'generating_audio' | 'completed' | 'failed'
   audioUrl?: string
   audioUrl2?: string
+  // Flux d'écoute anticipée (SunoAPI), disponible avant le MP3 final.
+  streamUrl?: string
 }
 
 // Fait avancer une chanson en cours : l'Edge Function interroge ApiPass une
@@ -69,11 +71,13 @@ export async function deleteSong(songGenerationId: string): Promise<void> {
   if (error) throw error
 }
 
-export async function createSongFromCredit(draft: SongDraft): Promise<{ songGenerationId: string }> {
+export async function createSongFromCredit(
+  draft: SongDraft
+): Promise<{ songGenerationId: string; title?: string }> {
   if (!isSupabaseConfigured) {
     return { songGenerationId: `demo_${Date.now()}` }
   }
   const { data, error } = await supabase.functions.invoke('create-song', { body: { draft } })
   if (error) throw error
-  return { songGenerationId: data.songGenerationId }
+  return { songGenerationId: data.songGenerationId, title: data.title }
 }

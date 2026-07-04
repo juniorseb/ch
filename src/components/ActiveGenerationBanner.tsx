@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActiveGeneration, clearActiveGeneration } from '../lib/activeGeneration'
 import { checkSongStatus } from '../lib/api/song'
@@ -25,6 +25,10 @@ export default function ActiveGenerationBanner() {
   const [pct, setPct] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [hidden, setHidden] = useState(false)
+  // Écoute en avant-première (flux SunoAPI), disponible avant le MP3 final.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
     if (!active || !isSupabaseConfigured) return
@@ -46,6 +50,7 @@ export default function ActiveGenerationBanner() {
     async function check() {
       try {
         const res = await checkSongStatus(active!.id)
+        if (res.streamUrl) setPreviewUrl(res.streamUrl)
         if (res.status === 'completed') finish('completed')
         else if (res.status === 'failed') finish('failed')
       } catch {
@@ -53,11 +58,12 @@ export default function ActiveGenerationBanner() {
       }
     }
 
-    // Chemin principal : broadcast Realtime (callback ApiPass ou polling serveur).
+    // Chemin principal : broadcast Realtime (callback ou polling serveur).
     const channel = supabase
       .channel(`song:${active.id}`)
       .on('broadcast', { event: 'status' }, ({ payload }) => {
-        if (payload.status === 'completed') finish('completed')
+        if (payload.status === 'preview' && payload.streamUrl) setPreviewUrl(payload.streamUrl)
+        else if (payload.status === 'completed') finish('completed')
         else if (payload.status === 'failed') finish('failed')
       })
       .subscribe()
@@ -90,6 +96,12 @@ export default function ActiveGenerationBanner() {
     clearActiveGeneration()
     setHidden(true)
     navigate(`/app/chansons/${active!.id}`)
+  }
+  function togglePreview() {
+    const el = audioRef.current
+    if (!el) return
+    if (playing) el.pause()
+    else el.play().catch(() => {})
   }
 
   const border =
@@ -160,6 +172,39 @@ export default function ActiveGenerationBanner() {
           <div
             className="h-full bg-ember-600 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+
+      {/* Écoute en avant-première : dispo dès que le flux existe, avant le MP3
+          final. La version définitive (téléchargeable/partageable) arrivera juste après. */}
+      {status === 'generating' && previewUrl && (
+        <div className="mt-2.5 flex items-center gap-2.5 rounded-lg bg-white/[0.04] px-2.5 py-2">
+          <button
+            onClick={togglePreview}
+            aria-label={playing ? 'Pause' : 'Écouter l’aperçu'}
+            className="w-8 h-8 rounded-full bg-ember-600 text-cream flex items-center justify-center shrink-0"
+          >
+            {playing ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
+          <span className="text-[12px] md:text-[13px] text-ember-700 font-medium">
+            🎧 Aperçu prêt — écoute pendant qu'on finalise
+          </span>
+          <audio
+            ref={audioRef}
+            src={previewUrl}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
           />
         </div>
       )}

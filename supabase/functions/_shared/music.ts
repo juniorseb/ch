@@ -14,7 +14,9 @@ export type MusicProvider = 'sunoapi' | 'apipass'
 export type TaskState =
   | { state: 'success'; urls: [string | undefined, string | undefined] }
   | { state: 'fail'; message: string }
-  | { state: 'pending' }
+  // En cours : `previewUrl` = flux d'écoute anticipée (SunoAPI streamAudioUrl),
+  // dispo bien avant le MP3 final. Absent pour ApiPass.
+  | { state: 'pending'; previewUrl?: string }
 
 // Contraintes Suno : style <= 200, prompt (paroles) <= 3000.
 const MAX_STYLE = 200
@@ -36,7 +38,7 @@ export async function loadMusicSettings(): Promise<MusicSettings> {
     sunoapiEnabled: settingBool(s, 'music_sunoapi_enabled', true),
     apipassEnabled: settingBool(s, 'music_apipass_enabled', true),
     primary: settingStr(s, 'music_primary', 'sunoapi') === 'apipass' ? 'apipass' : 'sunoapi',
-    sunoapiModel: settingStr(s, 'music_sunoapi_model', 'V4_5'),
+    sunoapiModel: settingStr(s, 'music_sunoapi_model', 'V5_5'),
   }
 }
 
@@ -96,11 +98,13 @@ export function readSunoapiState(dataField: Record<string, unknown>): TaskState 
     const msg = (dataField?.errorMessage as string) || status
     return { state: 'fail', message: msg }
   }
+  const arr = ((dataField?.response as Record<string, unknown>)?.sunoData ?? []) as Array<Record<string, unknown>>
   if (status === 'SUCCESS') {
-    const arr = ((dataField?.response as Record<string, unknown>)?.sunoData ?? []) as Array<Record<string, unknown>>
     return { state: 'success', urls: [arr[0]?.audioUrl as string, arr[1]?.audioUrl as string] }
   }
-  return { state: 'pending' }
+  // Intermédiaire (PENDING / TEXT_SUCCESS / FIRST_SUCCESS) : le flux d'aperçu
+  // apparaît dès que la 1re piste commence (avant le MP3 final).
+  return { state: 'pending', previewUrl: arr[0]?.streamAudioUrl as string | undefined }
 }
 
 async function pollSunoapi(taskId: string, apiKey: string): Promise<TaskState> {
