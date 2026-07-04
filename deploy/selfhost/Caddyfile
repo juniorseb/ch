@@ -1,0 +1,52 @@
+# Caddy — HTTPS automatique (Let's Encrypt).
+# Installe Caddy sur le VPS, place ce fichier en /etc/caddy/Caddyfile, puis :
+#   sudo systemctl reload caddy
+# Prérequis DNS : mamelodie.net et www.mamelodie.net -> IP du VPS.
+#
+# SETUP MONO-DOMAINE : mamelodie.net sert le frontend ET expose l'API Supabase
+# self-hosted (Kong sur :8000) sous les chemins /rest, /auth, /functions, etc.
+# Avantage : le webhook GeniusPay et le callback ApiPass utilisent la même
+# origine que le site — ex. https://mamelodie.net/functions/v1/geniuspay-webhook
+#
+# Côté app, règle en conséquence :
+#   VITE_SUPABASE_URL=https://mamelodie.net
+#   FUNCTIONS_PUBLIC_URL=https://mamelodie.net/functions/v1   (dans supabase/docker/.env)
+
+mamelodie.net, www.mamelodie.net {
+    encode gzip
+
+    # --- Durcissement : en-têtes de sécurité sur toutes les réponses ---
+    header {
+        # Force HTTPS pour les prochaines visites (1 an).
+        Strict-Transport-Security "max-age=31536000"
+        # Empêche le MIME-sniffing.
+        X-Content-Type-Options "nosniff"
+        # Anti-clickjacking (le site ne peut pas être mis en iframe).
+        X-Frame-Options "DENY"
+        # Ne divulgue pas l'URL complète en referrer cross-site.
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Coupe des API navigateur non utilisées.
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        # Ne pas révéler le logiciel serveur.
+        -Server
+    }
+
+    # --- API Supabase self-hosted (Kong écoute sur :8000 en local du VPS) ---
+    # On proxy UNIQUEMENT les chemins dont l'app a besoin ; tout le reste = front.
+    # (On n'expose PAS /pg -> pg-meta, ni Studio : réservés à l'admin via SSH.)
+    @supabase path /rest/* /auth/* /realtime/* /storage/* /functions/*
+    handle @supabase {
+        reverse_proxy localhost:8000
+    }
+
+    # --- Frontend statique (build Vite, SPA React Router) ---
+    handle {
+        root * /var/www/mamelodie/dist
+        try_files {path} /index.html
+        file_server
+
+        # Cache long pour les assets fingerprintés
+        @assets path /assets/*
+        header @assets Cache-Control "public, max-age=31536000, immutable"
+    }
+}

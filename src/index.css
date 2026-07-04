@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Thème sombre « façon Spotify », accent orange (identité Mamélodie).
+   Convention des tokens :
+   - bg / surface / deep : niveaux de fond (page, cartes, puces foncées)
+   - ink / ink-soft / clay : texte (clair -> gris atténué)
+   - cream : texte clair posé SUR une couleur (boutons, badges)
+   - ember : accent (orange) */
+@theme {
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+
+  --color-bg: #0F0F11;
+  --color-surface: #1A1B1F;
+  --color-surface-2: #232429;
+  --color-deep: #08080A;
+
+  --color-cream: #FBF7F3;
+  --color-cream-soft: #232429;
+  --color-ink: #F3F1EE;
+  --color-ink-soft: #D5CDCD;
+  --color-clay: #B4AFA8;
+  --color-line: #2B2C31;
+
+  /* Accent aligné sur le orange officiel du logo (#F97316). */
+  --color-ember-50: #2A1A12;
+  --color-ember-100: #F5C4B3;
+  --color-ember-200: #F0997B;
+  --color-ember-400: #F97316;
+  --color-ember-600: #F97316;
+  --color-ember-700: #FF9248;
+  --color-ember-900: #4A1B0C;
+
+  --color-leaf-100: #16271C;
+  --color-leaf-600: #3F7A5C;
+  --color-leaf-900: #86E0A6;
+}
+
+html {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sur fond sombre, on force la couleur du texte des champs (sinon noir par
+   défaut du navigateur = illisible) et un placeholder atténué. */
+input, textarea, select {
+  color: var(--color-ink);
+}
+/* Placeholder = direction, pas réponse : contraste réduit (~50%) pour qu'un
+   exemple soit distingué d'un vrai texte saisi en < 200 ms (règle globale). */
+input::placeholder, textarea::placeholder {
+  color: var(--color-clay);
+  opacity: 0.5;
+}
+option {
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Les <button> natifs n'ont pas cursor:pointer par défaut. */
+button:not(:disabled), [role="button"], label[for] {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: var(--color-ember-600);
+  color: var(--color-cream);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ember-600);
+  outline-offset: 2px;
+}
+
+/* Bouton flottant "+" : orange plein, sans ombre/glow. */
+.fab-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #F97316;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+.fab-button:hover {
+  transform: scale(1.03);
+}
+.fab-button:active {
+  transform: scale(0.97);
+}
+.fab-button svg {
+  color: #FFFFFF;
+}
+
+/* Apparition en fondu (phrases de l'écran de chargement). */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadein {
+  animation: fadein 0.5s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
