@@ -47,7 +47,7 @@ export default function App() {
           <Route path="/inscription" element={<Signup />} />
           <Route path="/verification" element={<VerifyEmail />} />
           <Route path="/connexion" element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/oauth/callback" element={<AuthCallback />} />
           <Route path="/mot-de-passe-oublie" element={<ForgotPassword />} />
 
           {/* Parcours de création : PUBLIC (sans compte) jusqu'aux paroles.

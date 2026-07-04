@@ -30,7 +30,9 @@ export default function GoogleButton({
       return
     }
 
-    const base = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+    // NB : /oauth/callback (pas /auth/...) pour ne PAS collisionner avec le proxy
+    // Caddy « /auth/* -> Kong » en prod (sinon la page tombe sur le dashboard Kong).
+    const base = `${window.location.origin}/oauth/callback?next=${encodeURIComponent(redirectTo)}`
     const useRedirect = window.matchMedia('(max-width: 767px)').matches
 
     // --- Mobile : redirection plein écran ---

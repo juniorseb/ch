@@ -35,7 +35,7 @@ export default function AuthCallback() {
             body: {
               visitorId: getVisitorId(),
               event: isNewAccount ? 'account_created' : 'login',
-              path: '/auth/callback',
+              path: '/oauth/callback',
             },
           })
         }
