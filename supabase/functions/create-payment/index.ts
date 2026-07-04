@@ -138,6 +138,26 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Clés GeniusPay non configurées' }, 500)
     }
 
+    // Jeton de connexion à USAGE UNIQUE ajouté à l'URL de retour : permet
+    // l'auto-connexion même si le retour s'ouvre dans un AUTRE navigateur
+    // (mobile money type Wave -> Safari), pour ne PAS casser l'élan de création.
+    let successUrl = returnUrl
+    try {
+      if (user.email) {
+        const { data: link } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email: user.email,
+        })
+        const tokenHash = (link?.properties as { hashed_token?: string } | undefined)?.hashed_token
+        if (tokenHash) {
+          const sep = returnUrl.includes('?') ? '&' : '?'
+          successUrl = `${returnUrl}${sep}login=${encodeURIComponent(tokenHash)}`
+        }
+      }
+    } catch (e) {
+      console.error('[create-payment] generateLink échoué (retour sans auto-login):', String(e))
+    }
+
     const geniusRes = await fetch(GENIUSPAY_URL, {
       method: 'POST',
       headers: {
@@ -153,7 +173,7 @@ Deno.serve(async (req) => {
         description: topup
           ? `Recharge ${tier.credits} crédit${tier.credits > 1 ? 's' : ''} Mamélodie`
           : 'Chanson personnalisée Mamélodie',
-        success_url: returnUrl,
+        success_url: successUrl,
         error_url: returnUrl,
         // Retournées dans le webhook -> on retrouve le paiement / la chanson.
         metadata: { payment_id: payment.id, song_generation_id: song?.id ?? null },

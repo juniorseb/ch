@@ -35,10 +35,24 @@ export default function PaymentReturn() {
     let cancelled = false
 
     ;(async () => {
+      // Auto-connexion via le jeton magic-link glissé dans l'URL de retour :
+      // rétablit la session même dans un autre navigateur (Wave -> Safari), pour
+      // reprendre le parcours sans rupture. Puis on retire le jeton de l'URL.
+      const loginToken = new URLSearchParams(window.location.search).get('login')
+      if (loginToken) {
+        try {
+          await supabase.auth.verifyOtp({ token_hash: loginToken, type: 'magiclink' })
+        } catch {
+          /* jeton expiré/déjà utilisé -> on tombera sur l'écran « connecte-toi » */
+        }
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+
       const user = await getCurrentUser()
       if (cancelled) return
 
-      // Retour dans un autre navigateur : pas de session ici.
+      // Toujours pas de session (jeton absent/expiré) : le paiement est confirmé
+      // côté serveur ; on invite juste à se connecter.
       if (!user) {
         setNeedsLogin(true)
         return
