@@ -41,17 +41,21 @@ Deno.serve(async (req) => {
     const signature = req.headers.get('X-Webhook-Signature') ?? ''
     const timestamp = req.headers.get('X-Webhook-Timestamp') ?? ''
 
-    // Secret webhook du bon environnement (admin -> app_secrets, repli env).
+    // GeniusPay n'envoie pas toujours l'en-tête d'environnement (X-Webhook-
+    // Environment). On vérifie donc la signature contre TOUS les secrets webhook
+    // configurés (sandbox ET live) : si l'un correspond, c'est authentique.
     const secrets = await loadSecrets()
-    const secret =
-      (env === 'sandbox' ? secrets.get('geniuspay_whsec_sandbox') : secrets.get('geniuspay_whsec_live')) ??
-      Deno.env.get(env === 'sandbox' ? 'GENIUSPAY_WEBHOOK_SECRET_SANDBOX' : 'GENIUSPAY_WEBHOOK_SECRET') ??
-      ''
+    const whsecs = [
+      secrets.get('geniuspay_whsec_sandbox'),
+      secrets.get('geniuspay_whsec_live'),
+      Deno.env.get('GENIUSPAY_WEBHOOK_SECRET_SANDBOX'),
+      Deno.env.get('GENIUSPAY_WEBHOOK_SECRET'),
+    ].filter((s): s is string => !!s && s.trim().length > 0)
 
-    // SÉCURITÉ (fail-closed) : sans secret configuré, on REJETTE — sinon un tiers
-    // pourrait forger un « payment.success » et déclencher une génération gratuite.
-    if (!secret) {
-      console.error(`[geniuspay-webhook] secret webhook manquant (env=${env}) -> rejet`)
+    // SÉCURITÉ (fail-closed) : aucun secret configuré -> on REJETTE (sinon un
+    // tiers pourrait forger un « payment.success » et générer gratuitement).
+    if (whsecs.length === 0) {
+      console.error('[geniuspay-webhook] aucun secret webhook configuré -> rejet')
       return jsonResponse({ error: 'webhook non configuré' }, 401)
     }
     // Anti-rejeu : timestamp récent (< 5 min).
@@ -59,8 +63,12 @@ Deno.serve(async (req) => {
     if (!ts || Math.abs(Date.now() / 1000 - ts) > 300) {
       return jsonResponse({ error: 'timestamp invalide' }, 400)
     }
-    const expected = await hmacHex(secret, `${timestamp}.${raw}`)
-    if (!timingSafeEqual(expected, signature)) {
+    let verified = false
+    for (const s of whsecs) {
+      if (timingSafeEqual(await hmacHex(s, `${timestamp}.${raw}`), signature)) { verified = true; break }
+    }
+    if (!verified) {
+      console.error(`[geniuspay-webhook] signature invalide (env="${env}", ${whsecs.length} secret(s) testé(s), sig=${signature.slice(0, 12)}…)`)
       return jsonResponse({ error: 'signature invalide' }, 401)
     }
 
