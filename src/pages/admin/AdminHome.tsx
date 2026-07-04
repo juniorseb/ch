@@ -185,6 +185,34 @@ function Funnel() {
               </div>
             </div>
           </div>
+
+          {/* Pages d'auth dédiées : arrivées vs complétion (qui arrive mais ne finit pas). */}
+          <div className="mt-4 pt-3 border-t border-line">
+            <div className="text-[12px] md:text-[13px] text-clay mb-2">Pages Connexion / Inscription</div>
+            <div className="flex flex-col gap-1.5">
+              {[
+                { label: 'Inscription', arrived: 'signup_view', done: 'account_created' },
+                { label: 'Connexion', arrived: 'login_view', done: 'login' },
+              ].map((r) => {
+                const a = ev[r.arrived]?.visitors ?? 0
+                const d = ev[r.done]?.visitors ?? 0
+                const conv = a ? (d / a) * 100 : 0
+                return (
+                  <div key={r.label} className="flex items-baseline justify-between gap-2 text-[13px] md:text-[14px]">
+                    <span className="text-ink">{r.label}</span>
+                    <span className="text-clay tabular-nums">
+                      <span className="font-semibold text-ink">{a}</span> arrivée{a > 1 ? 's' : ''} ·{' '}
+                      <span className="font-semibold text-ink">{d}</span> terminée{d > 1 ? 's' : ''}
+                      {a > 0 && <span className="text-ember-700"> · {pctText(conv)}</span>}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[11px] md:text-[12px] text-clay mt-1.5">
+              « Terminée » pour l'inscription = comptes créés toutes sources (une approximation).
+            </p>
+          </div>
         </div>
       )}
     </div>

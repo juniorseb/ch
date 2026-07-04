@@ -22,6 +22,9 @@ const ALLOWED_EVENTS = new Set([
   'payment',
   'generation_started',
   'song_completed',
+  'signup_view',
+  'login_view',
+  'login',
 ])
 
 Deno.serve(async (req) => {

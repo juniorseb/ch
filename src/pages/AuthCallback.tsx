@@ -30,11 +30,14 @@ export default function AuthCallback() {
           const created = Date.parse(user.created_at ?? '')
           const last = user.last_sign_in_at ? Date.parse(user.last_sign_in_at) : created
           const isNewAccount = Number.isFinite(created) && Math.abs(last - created) < 10000
-          if (isNewAccount) {
-            await supabase.functions.invoke('track', {
-              body: { visitorId: getVisitorId(), event: 'account_created', path: '/auth/callback' },
-            })
-          }
+          // Nouveau compte = inscription ; sinon = connexion d'un compte existant.
+          await supabase.functions.invoke('track', {
+            body: {
+              visitorId: getVisitorId(),
+              event: isNewAccount ? 'account_created' : 'login',
+              path: '/auth/callback',
+            },
+          })
         }
       } catch {
         /* le tracking ne doit jamais bloquer le retour */

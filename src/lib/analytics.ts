@@ -34,6 +34,10 @@ export type TrackEvent =
   | 'payment'
   | 'generation_started'
   | 'song_completed'
+  // Pages d'auth autonomes (hors tunnel) : arrivée vs complétion.
+  | 'signup_view'
+  | 'login_view'
+  | 'login'
 
 // Journalise un événement de parcours. Best-effort et non bloquant : on
 // n'attend jamais la réponse, et toute erreur est silencieuse (le tracking ne

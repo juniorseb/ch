@@ -6,6 +6,7 @@ import AuthHeader from '../components/AuthHeader'
 import GoogleButton from '../components/GoogleButton'
 import SupportBadge from '../components/SupportBadge'
 import { signIn } from '../lib/api/auth'
+import { track } from '../lib/analytics'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -20,6 +21,7 @@ export default function Login() {
     setError('')
     try {
       await signIn(email, password)
+      track('login')
       sessionStorage.setItem('mamelodie:demo-authed', '1')
       navigate('/app')
     } catch {

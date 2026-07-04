@@ -14,6 +14,9 @@ const PATH_TO_STEP: Record<string, TrackEvent> = {
   '/creer/paroles': 'lyrics',
   '/creer/compte': 'account',
   '/creer/paiement': 'payment',
+  // Pages d'auth autonomes.
+  '/inscription': 'signup_view',
+  '/connexion': 'login_view',
 }
 
 // Émet automatiquement l'étape de funnel correspondant à l'URL courante
