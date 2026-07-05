@@ -11,6 +11,16 @@ import { createPayment } from '../lib/api/geniuspay'
 import { addCreditsDemo, consumeCreditDemo } from '../lib/api/credits'
 import { addDemoPayment } from '../lib/api/payments'
 
+// Nom « produit » de chaque palier — mappé sur l'id. Affiché en secondaire, à
+// la place où figurait « crédit » (le mot « crédit » n'apparaît jamais côté
+// utilisateur : on vend un résultat, des chansons).
+const PACK_NAME: Record<string, string> = {
+  c1: 'Pack Air',
+  c4: 'Pack Ambiance',
+  c8: 'Pack Fête',
+  c18: 'Pack Collection',
+}
+
 export default function Payment() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -29,6 +39,12 @@ export default function Payment() {
   }, [])
 
   const tier = tiers.find((t) => t.id === tierId) ?? tiers[0]
+
+  // Prix unitaire de référence = celui du palier « 1 chanson » (repli : le
+  // prix/crédit du premier palier). Sert à calculer l'économie de chaque palier.
+  const baseUnit =
+    tiers.find((t) => t.credits === 1)?.priceFcfa ??
+    (tiers[0] ? tiers[0].priceFcfa / tiers[0].credits : 0)
 
   // Recharge autonome (depuis le profil) : signalée explicitement par ?topup=1
   // (le brouillon étant persisté, on ne peut pas se fier à son absence).
@@ -89,52 +105,64 @@ export default function Payment() {
       footer={
         <>
           <Button className="w-full" loading={loading} onClick={handlePay}>
-            {loading ? 'Chargement…' : `Payer ${tier.priceFcfa.toLocaleString('fr-FR')} F`}
+            {loading
+              ? 'Chargement…'
+              : `Obtenir ${tier.credits} chanson${tier.credits > 1 ? 's' : ''} — ${tier.priceFcfa.toLocaleString('fr-FR')} F`}
           </Button>
-          <p className="text-[12px] md:text-[13px] text-clay text-center mt-2">
-            Paiement sécurisé : Mobile Money (Wave, Orange, MTN) ou carte bancaire, sur la page suivante.
-          </p>
+          <div className="mt-2.5 flex flex-col items-center gap-1 text-[12px] md:text-[13px] text-clay">
+            <span className="flex items-center gap-1.5">
+              <span className="text-leaf-900">✔</span>
+              Paiement sécurisé Mobile Money (Wave, Orange, MTN) ou carte bancaire
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-leaf-900">✔</span>
+              Chanson livrée en quelques minutes
+            </span>
+          </div>
         </>
       }
     >
       <BackButton onClick={() => navigate(-1)} className="mb-5" />
 
-      <h1 className="text-[22px] md:text-[26px] mb-1">Recharge tes crédits</h1>
-      <p className="text-[14px] md:text-[16px] text-ink-soft mb-6">1 crédit = 1 chanson. Plus tu prends de crédits, moins chacun coûte cher.</p>
+      <h1 className="text-[22px] md:text-[26px] mb-1">Prends ton pack</h1>
+      <p className="text-[14px] md:text-[16px] text-ink-soft mb-6">Crée une chanson pour toi ou pour ceux que tu aimes, quand tu veux.</p>
 
       <div className="flex flex-col gap-2.5">
         {tiers.map((t) => {
           const active = tierId === t.id
+          // Économie = ce que coûteraient ces chansons au prix unitaire de base,
+          // moins le prix du palier. Affichée seulement si réellement > 0.
+          const savings = Math.round(baseUnit * t.credits - t.priceFcfa)
           return (
             <button
               key={t.id}
               onClick={() => setTierId(t.id)}
-              className={`rounded-xl px-4 py-3.5 flex items-center justify-between text-left transition-colors ${
+              className={`rounded-xl px-4 py-3.5 flex items-start justify-between gap-3 text-left transition-colors ${
                 active ? 'bg-surface border-2 border-ember-600' : 'bg-surface border border-line'
               }`}
             >
-              <span>
-                <span className="flex items-center gap-2">
-                  <span className="text-[14px] md:text-[16px] font-semibold text-ink">
-                    {t.credits} crédit{t.credits > 1 ? 's' : ''}
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[17px] md:text-[19px] font-bold text-ink">
+                    {t.credits} chanson{t.credits > 1 ? 's' : ''}
                   </span>
                   {t.popular && (
                     <span className="text-[11px] md:text-[12px] bg-ember-50 text-ember-700 px-2 py-0.5 rounded-md">
-                      Populaire
+                      ⭐ Recommandé
                     </span>
                   )}
                 </span>
-                <span className="text-[12px] md:text-[13px] text-clay">
-                  {t.credits} chanson{t.credits > 1 ? 's' : ''}
+                <span className="block text-[12px] md:text-[13px] text-clay mt-1">
+                  {PACK_NAME[t.id] ?? 'Pack'}
                 </span>
               </span>
-              <span className="text-right">
+              <span className="text-right shrink-0">
                 <span className="block text-[15px] md:text-[17px] font-semibold text-ink">
                   {t.priceFcfa.toLocaleString('fr-FR')} F
                 </span>
-                {t.credits > 1 && (
-                  <span className="block text-[11px] md:text-[12px] text-clay">
-                    {Math.round(t.priceFcfa / t.credits)} F / crédit
+                {savings > 0 && (
+                  <span className="mt-1 inline-block text-[11px] md:text-[12px] font-semibold text-leaf-900 bg-leaf-100 px-2 py-0.5 rounded-md">
+                    Économise {savings.toLocaleString('fr-FR')} F
                   </span>
                 )}
               </span>
