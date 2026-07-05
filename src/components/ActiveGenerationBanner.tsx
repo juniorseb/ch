@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActiveGeneration, clearActiveGeneration } from '../lib/activeGeneration'
-import { checkSongStatus } from '../lib/api/song'
+import { getActiveGeneration, setActiveGeneration, clearActiveGeneration } from '../lib/activeGeneration'
+import { checkSongStatus, getServerActiveGeneration } from '../lib/api/song'
 import { SONGS_REFRESH_EVENT } from '../lib/useSongHistory'
 import { track } from '../lib/analytics'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -20,7 +20,7 @@ function mmss(ms: number): string {
 // naviguer / recharger sans l'interrompre.
 export default function ActiveGenerationBanner() {
   const navigate = useNavigate()
-  const [active] = useState(getActiveGeneration())
+  const [active, setActive] = useState(getActiveGeneration())
   const [status, setStatus] = useState<'generating' | 'completed' | 'failed'>('generating')
   const [pct, setPct] = useState(0)
   const [elapsed, setElapsed] = useState(0)
@@ -29,6 +29,20 @@ export default function ActiveGenerationBanner() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+
+  // Rien en local ? On regarde côté serveur : une génération lancée sur un AUTRE
+  // appareil (ex. PC pendant qu'on se connecte au téléphone) doit aussi s'afficher.
+  useEffect(() => {
+    if (active || hidden || !isSupabaseConfigured) return
+    let cancelled = false
+    getServerActiveGeneration().then((g) => {
+      if (!cancelled && g) {
+        setActiveGeneration(g)
+        setActive(g)
+      }
+    })
+    return () => { cancelled = true }
+  }, [active, hidden])
 
   useEffect(() => {
     if (!active || !isSupabaseConfigured) return

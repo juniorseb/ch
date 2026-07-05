@@ -43,6 +43,27 @@ export async function improveLyrics(draft: SongDraft): Promise<string> {
   return (data?.lyrics as string) || base
 }
 
+// Génération en cours détectée CÔTÉ SERVEUR (indépendante du localStorage) :
+// permet d'afficher la notification "en cours" même si la génération a été
+// lancée depuis un AUTRE appareil/navigateur. RLS -> seulement les chansons de
+// l'utilisateur connecté.
+export async function getServerActiveGeneration(): Promise<{ id: string; title: string; startedAt: number } | null> {
+  if (!isSupabaseConfigured) return null
+  const { data } = await supabase
+    .from('song_generations')
+    .select('id, title, recipient_name, created_at')
+    .in('status', ['generating_lyrics', 'lyrics_ready', 'generating_audio'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!data) return null
+  return {
+    id: data.id as string,
+    title: (data.title as string) || `Pour ${(data.recipient_name as string) || 'toi'}`,
+    startedAt: Date.parse((data.created_at as string) || '') || Date.now(),
+  }
+}
+
 export interface SongStatusResult {
   status: 'pending' | 'generating_audio' | 'completed' | 'failed'
   audioUrl?: string
