@@ -112,10 +112,6 @@ export default function Payment() {
               <span className="text-leaf-900">✔</span>
               Paiement sécurisé Mobile Money (Wave, Orange, MTN) ou carte bancaire
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-leaf-900">✔</span>
-              Chanson livrée en quelques minutes
-            </span>
           </div>
         </>
       }
