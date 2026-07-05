@@ -105,9 +105,7 @@ export default function Payment() {
       footer={
         <>
           <Button className="w-full" loading={loading} onClick={handlePay}>
-            {loading
-              ? 'Chargement…'
-              : `Obtenir ${tier.credits} chanson${tier.credits > 1 ? 's' : ''} — ${tier.priceFcfa.toLocaleString('fr-FR')} F`}
+            {loading ? 'Chargement…' : `Choisir ce pack — ${tier.priceFcfa.toLocaleString('fr-FR')} F`}
           </Button>
           <div className="mt-2.5 flex flex-col items-center gap-1 text-[12px] md:text-[13px] text-clay">
             <span className="flex items-center gap-1.5">
