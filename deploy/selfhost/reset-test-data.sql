@@ -17,8 +17,10 @@ truncate api_calls;
 truncate email_otps;
 
 -- Contenu généré / paiements / avis
+-- NB : on ne touche PAS à storage.objects (Supabase bloque le DELETE direct via
+-- un trigger de protection). Les fichiers audio deviennent orphelins mais sont
+-- sans impact sur les stats ; nettoyage disque possible plus tard via l'API Storage.
 delete from feedback;
-delete from storage.objects where bucket_id = 'songs';
 delete from song_generations;
 delete from payments;
 
