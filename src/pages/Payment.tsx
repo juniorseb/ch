@@ -107,12 +107,9 @@ export default function Payment() {
           <Button className="w-full" loading={loading} onClick={handlePay}>
             {loading ? 'Chargement…' : `Choisir ce pack — ${tier.priceFcfa.toLocaleString('fr-FR')} F`}
           </Button>
-          <div className="mt-2.5 flex flex-col items-center gap-1 text-[12px] md:text-[13px] text-clay">
-            <span className="flex items-center gap-1.5">
-              <span className="text-leaf-900">✔</span>
-              Paiement sécurisé Mobile Money (Wave, Orange, MTN) ou carte bancaire
-            </span>
-          </div>
+          <p className="mt-2.5 text-center text-[12px] md:text-[13px] text-clay">
+            Paiement sécurisé Mobile Money (Wave, Orange, MTN) ou carte bancaire
+          </p>
         </>
       }
     >
