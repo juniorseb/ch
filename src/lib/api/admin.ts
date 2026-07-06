@@ -3,6 +3,7 @@ import { isOtpEnabled, setOtpEnabledDemo, getCreditTiers, isGeniuspaySandbox } f
 import type { CreditTier } from '../types'
 import { readDemoSongs } from '../songsStore'
 import { readDemoDownloads } from '../downloads'
+import { readDemoPlays } from '../plays'
 import { addCreditsDemo } from './credits'
 import { MOCK_SONGS } from '../mockData'
 import { styleLabel } from '../types'
@@ -37,6 +38,7 @@ export interface AdminStats {
   users: number
   songs: number
   downloads: number
+  plays: number
   creditsSold: number
   revenueFcfa: number
 }
@@ -58,6 +60,7 @@ export interface AdminSong {
   style: string
   status: string
   downloads: number
+  plays: number
   createdAt: string
   // Email de l'auteur (utilisateur qui a créé la chanson), « — » si inconnu.
   author: string
@@ -257,6 +260,7 @@ export async function getStats(): Promise<AdminStats> {
       users: 1,
       songs: readDemoSongs().length + MOCK_SONGS.length,
       downloads: readDemoDownloads(),
+      plays: readDemoPlays(),
       creditsSold: payments.reduce((s, p) => s + (p.creditsPurchased ?? 0), 0),
       revenueFcfa: payments.reduce((s, p) => s + (p.amountFcfa ?? 0), 0),
     }
@@ -310,6 +314,7 @@ export async function listSongs(page = 1, pageSize = 20): Promise<Paged<AdminSon
       style: styleLabel(s.style),
       status: s.status,
       downloads: 0,
+      plays: 0,
       createdAt: s.createdAt,
       author: 'compte de démonstration',
     }))

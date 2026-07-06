@@ -38,16 +38,17 @@ export default function AdminSongs() {
       </p>
 
       <div className="bg-surface border border-line rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-2.5 text-[12px] md:text-[13px] text-clay border-b border-line">
+        <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-2.5 text-[12px] md:text-[13px] text-clay border-b border-line">
           <span>Titre</span>
           <span className="text-right">Statut</span>
+          <span className="text-right">Écoutes</span>
           <span className="text-right">Téléch.</span>
           <span className="text-right">Date</span>
         </div>
         {songs.map((s) => (
           <div
             key={s.id}
-            className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-4 py-3 text-[13px] md:text-[15px] border-b border-line last:border-0"
+            className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-4 py-3 text-[13px] md:text-[15px] border-b border-line last:border-0"
           >
             <span className="min-w-0">
               <span className="block text-ink font-semibold truncate">{s.title}</span>
@@ -56,6 +57,7 @@ export default function AdminSongs() {
             <span className="text-clay text-right self-center text-[12px] md:text-[13px]">
               {STATUS_LABEL[s.status] ?? s.status}
             </span>
+            <span className="text-ink text-right self-center font-semibold">{s.plays}</span>
             <span className="text-ink text-right self-center font-semibold">{s.downloads}</span>
             <span className="text-clay text-right self-center">{s.createdAt}</span>
           </div>

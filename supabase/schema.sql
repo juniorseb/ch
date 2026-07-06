@@ -68,6 +68,7 @@ create table if not exists song_generations (
   -- Flux d'écoute anticipée (SunoAPI) le temps que le MP3 final se prépare.
   stream_url text,
   download_count integer not null default 0,
+  play_count integer not null default 0,
   suno_task_id text,
   -- Fournisseur musical ayant traité la tâche : 'sunoapi' ou 'apipass'.
   music_provider text,
@@ -248,6 +249,18 @@ set search_path = public as $$
 begin
   update public.song_generations
     set download_count = download_count + 1
+    where id = p_song and user_id = auth.uid();
+end;
+$$;
+
+-- Incrémente le compteur d'écoutes d'une chanson de l'appelant (même principe
+-- que record_download : security definer, borné au propriétaire).
+create or replace function record_play(p_song uuid)
+returns void language plpgsql security definer
+set search_path = public as $$
+begin
+  update public.song_generations
+    set play_count = play_count + 1
     where id = p_song and user_id = auth.uid();
 end;
 $$;

@@ -58,19 +58,20 @@ Deno.serve(async (req) => {
         admin.from('profiles').select('*', { count: 'exact', head: true }),
         admin.from('song_generations').select('*', { count: 'exact', head: true }).neq('status', 'failed'),
         admin.from('payments').select('amount_fcfa, credits_purchased').eq('status', 'success'),
-        admin.from('song_generations').select('download_count'),
+        admin.from('song_generations').select('download_count, play_count'),
       ])
       const creditsSold = (payments ?? []).reduce((s, p) => s + (p.credits_purchased ?? 0), 0)
       const revenueFcfa = (payments ?? []).reduce((s, p) => s + (p.amount_fcfa ?? 0), 0)
       const downloads = (dl ?? []).reduce((s, r) => s + (r.download_count ?? 0), 0)
-      return jsonResponse({ users: users ?? 0, songs: songs ?? 0, downloads, creditsSold, revenueFcfa })
+      const plays = (dl ?? []).reduce((s, r) => s + (r.play_count ?? 0), 0)
+      return jsonResponse({ users: users ?? 0, songs: songs ?? 0, downloads, plays, creditsSold, revenueFcfa })
     }
 
     if (action === 'songs') {
       const { from, to } = pageRange()
       const { data: rows, count } = await admin
         .from('song_generations')
-        .select('id, title, style, status, download_count, created_at, user_id', { count: 'exact' })
+        .select('id, title, style, status, download_count, play_count, created_at, user_id', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to)
 
@@ -89,6 +90,7 @@ Deno.serve(async (req) => {
           style: r.style ?? 'Automatique',
           status: r.status,
           downloads: r.download_count ?? 0,
+          plays: r.play_count ?? 0,
           createdAt: (r.created_at as string)?.slice(0, 10) ?? '',
           author: (r.user_id && emailById[r.user_id]) || '—',
         })),

@@ -36,20 +36,23 @@ export default function Dashboard() {
 
   return (
     <div className="pb-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
           <div className="text-[13px] md:text-[15px] text-clay">Bonjour</div>
           {name === null ? (
             <span className="inline-block w-32 h-6 md:h-7 mt-1 rounded-md bg-white/10 animate-pulse" />
           ) : (
-            <h1 className="text-[22px] md:text-[26px]">{name || 'toi'}</h1>
+            // truncate : certains pseudos (ex. issus de Google) sont très longs ;
+            // on tronque avec « … » pour ne pas casser la mise en page ni pousser
+            // le badge de solde hors de l'écran.
+            <h1 className="text-[22px] md:text-[26px] truncate">{name || 'toi'}</h1>
           )}
         </div>
         {/* Badge de solde (remplace l'avatar : le profil est dans la nav basse).
             Toujours visible, chiffre en orange, clic -> recharge. */}
         <Link
           to="/creer/paiement?topup=1"
-          className="flex items-center gap-1.5 rounded-full bg-surface border border-line px-3 py-2 hover:border-ember-400 transition-colors"
+          className="shrink-0 flex items-center gap-1.5 rounded-full bg-surface border border-line px-3 py-2 hover:border-ember-400 transition-colors"
           aria-label={`${songsRemaining} crédits — recharger`}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-soft)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

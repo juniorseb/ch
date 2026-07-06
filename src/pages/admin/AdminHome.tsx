@@ -243,9 +243,10 @@ export default function AdminHome() {
       <h1 className="text-[22px] md:text-[26px] mb-1">Tableau de bord</h1>
       <p className="text-[13px] md:text-[15px] text-ink-soft mb-6">Vue d'ensemble de la plateforme.</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         <StatCard label="Utilisateurs" value={stats ? String(stats.users) : '…'} />
         <StatCard label="Chansons générées" value={stats ? String(stats.songs) : '…'} />
+        <StatCard label="Écoutes" value={stats ? String(stats.plays) : '…'} />
         <StatCard label="Téléchargements" value={stats ? String(stats.downloads) : '…'} />
         <StatCard label="Crédits vendus" value={stats ? String(stats.creditsSold) : '…'} />
         <StatCard

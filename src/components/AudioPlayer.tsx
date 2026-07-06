@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Waveform from './Waveform'
 import { shareSong } from '../lib/share'
 import { recordDownload } from '../lib/downloads'
+import { recordPlay } from '../lib/plays'
 
 interface AudioPlayerProps {
   title: string
@@ -22,6 +23,9 @@ export default function AudioPlayer({ title, versions, songId }: AudioPlayerProp
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
+  // On ne comptabilise l'écoute qu'UNE fois par montage du lecteur (pas à
+  // chaque play/pause), pour un compteur d'écoutes cohérent.
+  const countedRef = useRef(false)
 
   // Si on change de version pendant la lecture, on repart proprement.
   useEffect(() => {
@@ -41,6 +45,10 @@ export default function AudioPlayer({ title, versions, songId }: AudioPlayerProp
     } else {
       el.play()
       setPlaying(true)
+      if (!countedRef.current) {
+        countedRef.current = true
+        void recordPlay(songId)
+      }
     }
   }
 
