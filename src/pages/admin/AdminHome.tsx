@@ -4,12 +4,14 @@ import {
   getStats,
   getSeries,
   getFunnel,
+  getTrafficSources,
   exportAnalyticsCsv,
   type AdminStats,
   type SeriesPoint,
   type PeriodKey,
   type FunnelPeriod,
   type FunnelResult,
+  type TrafficSourceRow,
 } from '../../lib/api/admin'
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -219,6 +221,100 @@ function Funnel() {
   )
 }
 
+// Libellés lisibles pour les sources connues (le reste s'affiche tel quel).
+const SOURCE_LABEL: Record<string, string> = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  whatsapp: 'WhatsApp',
+  tiktok: 'TikTok',
+  twitter: 'X / Twitter',
+  youtube: 'YouTube',
+  google: 'Google',
+  bing: 'Bing',
+  linkedin: 'LinkedIn',
+  snapchat: 'Snapchat',
+  telegram: 'Telegram',
+  messenger: 'Messenger',
+  direct: 'Accès direct',
+}
+function sourceLabel(s: string): string {
+  return SOURCE_LABEL[s] ?? s
+}
+
+// Sources de trafic : d'où viennent les visiteurs (première visite). Barres
+// classées par nombre de visiteurs uniques, part en % du total.
+function TrafficSources() {
+  const [period, setPeriod] = useState<FunnelPeriod>('30d')
+  const [rows, setRows] = useState<TrafficSourceRow[] | null>(null)
+
+  useEffect(() => {
+    setRows(null)
+    getTrafficSources(period)
+      .then(setRows)
+      .catch(() => setRows([]))
+  }, [period])
+
+  const total = (rows ?? []).reduce((s, r) => s + r.visitors, 0)
+
+  return (
+    <div className="bg-surface border border-line rounded-xl p-4 mt-8">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
+        <div>
+          <h2 className="text-[16px] md:text-[18px] font-semibold text-ink">Sources de trafic</h2>
+          <p className="text-[12px] md:text-[13px] text-clay">
+            D'où viennent tes visiteurs (première visite).
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {FUNNEL_PERIODS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setPeriod(p.id)}
+              className={`px-3 py-1.5 rounded-lg text-[12px] md:text-[13px] font-medium ${
+                period === p.id ? 'bg-deep text-cream' : 'text-ink-soft hover:bg-ember-50'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {rows === null ? (
+        <p className="text-[13px] text-clay text-center py-8">Chargement…</p>
+      ) : total === 0 ? (
+        <p className="text-[13px] text-clay text-center py-8">Pas encore de données de source.</p>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {rows.map((r) => {
+            const share = total ? (r.visitors / total) * 100 : 0
+            return (
+              <div key={r.source}>
+                <div className="flex items-baseline justify-between gap-2 mb-1">
+                  <span className="text-[13px] md:text-[14px] text-ink truncate">{sourceLabel(r.source)}</span>
+                  <span className="text-[12px] md:text-[13px] text-clay tabular-nums shrink-0">
+                    <span className="font-semibold text-ink">{r.visitors}</span> · {pctText(share)}
+                  </span>
+                </div>
+                <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full bg-ember-600 rounded-full"
+                    style={{ width: `${Math.max(share, r.visitors > 0 ? 2 : 0)}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+          <p className="text-[11px] md:text-[12px] text-clay mt-1.5">
+            « Accès direct » = URL saisie, favori ou app sans référent. Les liens Facebook (?fbclid),
+            Google et UTM sont détectés automatiquement.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminHome() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [period, setPeriod] = useState<PeriodKey>('7d')
@@ -294,6 +390,9 @@ export default function AdminHome() {
           />
         )}
       </div>
+
+      {/* Sources de trafic : d'où viennent les visiteurs. */}
+      <TrafficSources />
 
       {/* Analyse comportementale : le funnel de conversion du parcours. */}
       <Funnel />

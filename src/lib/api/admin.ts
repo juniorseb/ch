@@ -175,6 +175,30 @@ export async function getFunnel(period: FunnelPeriod): Promise<FunnelResult> {
   return data as FunnelResult
 }
 
+// ---- Sources de trafic (d'où viennent les visiteurs) ----------------------
+export interface TrafficSourceRow {
+  source: string
+  visitors: number
+  events: number
+}
+
+export async function getTrafficSources(period: FunnelPeriod): Promise<TrafficSourceRow[]> {
+  if (!isSupabaseConfigured) {
+    return [
+      { source: 'facebook', visitors: 42, events: 63 },
+      { source: 'direct', visitors: 28, events: 31 },
+      { source: 'whatsapp', visitors: 17, events: 20 },
+      { source: 'google', visitors: 9, events: 11 },
+      { source: 'instagram', visitors: 4, events: 5 },
+    ]
+  }
+  const { data, error } = await supabase.functions.invoke('admin-api', {
+    body: { action: 'traffic-sources', period },
+  })
+  if (error) throw error
+  return (data as TrafficSourceRow[]) ?? []
+}
+
 interface AnalyticsRow {
   created_at: string
   event: string

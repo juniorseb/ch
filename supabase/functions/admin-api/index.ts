@@ -273,6 +273,19 @@ Deno.serve(async (req) => {
       return jsonResponse({ uniqueVisitors: Number(uniq) || 0, events })
     }
 
+    // Sources de trafic : d'où viennent les visiteurs (fb via ?fbclid, google,
+    // whatsapp, referral, direct…), agrégé en base sur la période.
+    if (action === 'traffic-sources') {
+      const since = sinceFor(period ?? '30d')
+      const { data } = await admin.rpc('traffic_sources', { since })
+      const rows = ((data ?? []) as { source: string; visitors: number; events: number }[]).map((r) => ({
+        source: r.source,
+        visitors: Number(r.visitors) || 0,
+        events: Number(r.events) || 0,
+      }))
+      return jsonResponse(rows)
+    }
+
     // Suivi technique : nombre d'appels par API externe + erreurs sur la période.
     if (action === 'api-metrics') {
       const since = sinceFor(period ?? '30d')
